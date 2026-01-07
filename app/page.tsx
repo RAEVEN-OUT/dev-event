@@ -1,8 +1,8 @@
 import React from 'react'
 import ExploreBtn from '@/components/ExploreBtn'
 import EventCard from '@/components/EventCard'
-import events from '@/lib/constants'
 import { cacheLife } from 'next/cache'
+import { IEvent } from '@/database/event.model'
 
 const page = async() => {
   'use cache'
