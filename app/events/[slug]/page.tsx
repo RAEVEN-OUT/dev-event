@@ -5,10 +5,9 @@ import { IEvent } from '@/database/event.model';
 import { getSimilarEventsBySlug } from '@/lib/actions/event.action';
 import EventCard from '@/components/EventCard';
 
-// Generate static params for known routes
+// Generate static params with a dummy entry to satisfy build requirements
 export async function generateStaticParams() {
-    // Return empty array to prevent static generation
-    return [];
+    return [{ slug: 'placeholder' }];
 }
 
 const EventDetailItem = ({ icon, alt, label }: { icon: string, alt: string, label: string }) => (
@@ -39,6 +38,11 @@ const EventTags = ({ tags }: { tags: string[] }) => (
 
 const EventDetailsPage = async ({ params }: { params: Promise<{ slug: string }> }) => {
     const { slug } = await params;
+    
+    // Handle placeholder slug during build
+    if (slug === 'placeholder') {
+        return notFound();
+    }
     
     let event;
     let similarEvents: IEvent[] = [];
