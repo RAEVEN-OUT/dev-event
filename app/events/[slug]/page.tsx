@@ -5,6 +5,12 @@ import { IEvent } from '@/database/event.model';
 import { getSimilarEventsBySlug } from '@/lib/actions/event.action';
 import EventCard from '@/components/EventCard';
 
+// Generate static params for known routes
+export async function generateStaticParams() {
+    // Return empty array to prevent static generation
+    return [];
+}
+
 const EventDetailItem = ({ icon, alt, label }: { icon: string, alt: string, label: string }) => (
     <div className='flex-row-gap-2 items-center'>
         <Image src={icon} alt={alt} width={17} height={17} />
@@ -59,12 +65,17 @@ const EventDetailsPage = async ({ params }: { params: Promise<{ slug: string }> 
             return notFound();
         }
 
-        // Fetch similar events
-        try {
-            similarEvents = await getSimilarEventsBySlug(slug);
-        } catch (error) {
-            console.error('Failed to fetch similar events:', error);
-            // Continue without similar events
+        // Only fetch similar events at runtime, not during build
+        if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+            // Skip similar events during build
+            similarEvents = [];
+        } else {
+            try {
+                similarEvents = await getSimilarEventsBySlug(slug);
+            } catch (error) {
+                console.error('Failed to fetch similar events:', error);
+                similarEvents = [];
+            }
         }
         
     } catch (e) {
