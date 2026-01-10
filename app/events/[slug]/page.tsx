@@ -5,10 +5,9 @@ import { IEvent } from '@/database/event.model';
 import { getSimilarEventsBySlug } from '@/lib/actions/event.action';
 import EventCard from '@/components/EventCard';
 
-// Force dynamic rendering
+// Disable static generation completely
 export const dynamic = 'force-dynamic';
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+export const revalidate = 0;
 
 const EventDetailItem = ({ icon, alt, label }: { icon: string, alt: string, label: string }) => (
     <div className='flex-row-gap-2 items-center'>
@@ -40,11 +39,14 @@ const EventDetailsPage = async ({ params }: { params: Promise<{ slug: string }> 
     const { slug } = await params;
     
     let event;
+    let similarEvents: IEvent[] = [];
+    
     try {
+        const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
         const apiUrl = BASE_URL?.startsWith('http') ? `${BASE_URL}/api/events/${slug}` : `https://${BASE_URL}/api/events/${slug}`;
         
         const request = await fetch(apiUrl, {
-            cache: 'no-store' // Disable caching for dynamic content
+            cache: 'no-store'
         });
         
         if (!request.ok) {
@@ -60,6 +62,15 @@ const EventDetailsPage = async ({ params }: { params: Promise<{ slug: string }> 
         if (!event) {
             return notFound();
         }
+
+        // Fetch similar events
+        try {
+            similarEvents = await getSimilarEventsBySlug(slug);
+        } catch (error) {
+            console.error('Failed to fetch similar events:', error);
+            // Continue without similar events
+        }
+        
     } catch (e) {
         console.error('Error fetching event data:', e);
         return notFound();
@@ -70,7 +81,6 @@ const EventDetailsPage = async ({ params }: { params: Promise<{ slug: string }> 
     if (!description) return notFound();
 
     const bookings = 10;
-    const similarEvents: IEvent[] = await getSimilarEventsBySlug(slug);
 
     return (
         <section id="event">
@@ -118,14 +128,17 @@ const EventDetailsPage = async ({ params }: { params: Promise<{ slug: string }> 
                     </div>
                 </aside>
             </div>
-            <div className="flex w-full flex-col gap-4 pt-20">
-                <h2>Similar Events</h2>
-                <div className="events">
-                    {similarEvents.length > 0 && similarEvents.map((similarEvent: IEvent) => (
-                        <EventCard key={similarEvent.title} {...similarEvent} />
-                    ))}
+            
+            {similarEvents.length > 0 && (
+                <div className="flex w-full flex-col gap-4 pt-20">
+                    <h2>Similar Events</h2>
+                    <div className="events">
+                        {similarEvents.map((similarEvent: IEvent) => (
+                            <EventCard key={similarEvent.title} {...similarEvent} />
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
         </section>
     )
 }
