@@ -4,70 +4,68 @@ import BookEvent from '@/components/BookEvent';
 import { IEvent } from '@/database/event.model';
 import { getSimilarEventsBySlug } from '@/lib/actions/event.action';
 import EventCard from '@/components/EventCard';
-import { cacheLife } from 'next/cache';
-import { Suspense } from 'react';
 
-const BASE_URL=process.env.NEXT_PUBLIC_BASE_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
-const EventDetailItem=({icon,alt,label}:{icon:string,alt:string,label:string})=>(
+const EventDetailItem = ({ icon, alt, label }: { icon: string, alt: string, label: string }) => (
     <div className='flex-row-gap-2 items-center'>
         <Image src={icon} alt={alt} width={17} height={17} />
         <p>{label}</p>
     </div>
 )
 
-const EventAgenda=({agendaItems}:{agendaItems:string[]})=>(
+const EventAgenda = ({ agendaItems }: { agendaItems: string[] }) => (
     <div className="agenda">
         <h2>Agenda</h2>
         <ul>
-            {agendaItems.map((item)=>(
+            {agendaItems.map((item) => (
                 <li key={item}>{item}</li>
             ))}
         </ul>
     </div>
 )
 
-const EventTags=({tags}:{tags:string[]})=>(
+const EventTags = ({ tags }: { tags: string[] }) => (
     <div className='flex flex-row gap-1.5 flex-wrap'>
-        {tags.map((tag)=>(
+        {tags.map((tag) => (
             <span className='pill' key={tag}>{tag}</span>
         ))}
     </div>
 )
 
-const EventContent = async ({ slug }: { slug: string }) => {
-    'use cache'
-    cacheLife('hours')
+const EventDetailsPage = async ({ params }: { params: Promise<{ slug: string }> }) => {
+    const { slug } = await params;
     
     let event;
-    try{
-        const request = await fetch(`${BASE_URL}/api/events/${slug}`,{
-            next:{ revalidate: 60 }
+    try {
+        const request = await fetch(`${BASE_URL}/api/events/${slug}`, {
+            next: { revalidate: 60 }
         });
-        if(!request.ok){
-            if(request.status===404){
+        
+        if (!request.ok) {
+            if (request.status === 404) {
                 return notFound();
             }
             throw new Error(`Failed to fetch event: ${request.statusText}`);
         }
+        
         const response = await request.json();
         event = response.event;
-    
-        if(!event){
+
+        if (!event) {
             return notFound();
         }
-    }catch(e){
+    } catch (e) {
         console.error('Error fetching event data:', e);
         return notFound();
     }
 
-    const {description,image,overview,date,location,time,mode,agenda,organizer,audience,tags}= event
+    const { description, image, overview, date, location, time, mode, agenda, organizer, audience, tags } = event;
 
-    if(!description) return notFound();
+    if (!description) return notFound();
 
-    const  bookings=10;
-
-    const similarEvents: IEvent[]= await getSimilarEventsBySlug(slug);
+    const bookings = 10;
+    const similarEvents: IEvent[] = await getSimilarEventsBySlug(slug);
 
     return (
         <section id="event">
@@ -85,7 +83,7 @@ const EventContent = async ({ slug }: { slug: string }) => {
                     </section>
                     <section className="flex-col-gap-2">
                         <h2>Event Details</h2>
-                        <EventDetailItem icon="/icons/calendar.svg" alt="Calender" label={date} />
+                        <EventDetailItem icon="/icons/calendar.svg" alt="Calendar" label={date} />
                         <EventDetailItem icon="/icons/clock.svg" alt="Time" label={time} />
                         <EventDetailItem icon="/icons/pin.svg" alt="Location" label={location} />
                         <EventDetailItem icon="/icons/mode.svg" alt="Mode" label={mode} />
@@ -104,7 +102,7 @@ const EventContent = async ({ slug }: { slug: string }) => {
                         <h2>Book Your Spot</h2>
                         {bookings > 0 ? (
                             <p className='text-sm'>
-                                Jion {bookings} people who have already booked their spot!
+                                Join {bookings} people who have already booked their spot!
                             </p>
                         ) : (
                             <p className='text-sm'>
@@ -118,22 +116,12 @@ const EventContent = async ({ slug }: { slug: string }) => {
             <div className="flex w-full flex-col gap-4 pt-20">
                 <h2>Similar Events</h2>
                 <div className="events">
-                    {similarEvents.length >0 && similarEvents.map((similarEvent:IEvent)=>(
+                    {similarEvents.length > 0 && similarEvents.map((similarEvent: IEvent) => (
                         <EventCard key={similarEvent.title} {...similarEvent} />
                     ))}
                 </div>
             </div>
         </section>
-    )
-}
-
-const EventDetailsPage = async({params}:{params: Promise<{slug: string}>}) => {
-    const {slug} = await params;
-
-    return (
-        <Suspense fallback={<div>Loading event details...</div>}>
-            <EventContent slug={slug} />
-        </Suspense>
     )
 }
 
