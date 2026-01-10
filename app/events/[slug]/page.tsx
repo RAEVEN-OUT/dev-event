@@ -5,10 +5,6 @@ import { IEvent } from '@/database/event.model';
 import { getSimilarEventsBySlug } from '@/lib/actions/event.action';
 import EventCard from '@/components/EventCard';
 
-// Disable static generation completely
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 const EventDetailItem = ({ icon, alt, label }: { icon: string, alt: string, label: string }) => (
     <div className='flex-row-gap-2 items-center'>
         <Image src={icon} alt={alt} width={17} height={17} />
