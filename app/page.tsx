@@ -7,7 +7,11 @@ import { IEvent } from '@/database/event.model'
 const page = async() => {
   'use cache'
   cacheLife('hours');
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/events`);
+  
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  const apiUrl = baseUrl?.startsWith('http') ? `${baseUrl}/api/events` : `https://${baseUrl}/api/events`;
+  
+  const res = await fetch(apiUrl);
   const { events } = await res.json();
 
   return (

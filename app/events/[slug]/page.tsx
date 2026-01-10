@@ -5,6 +5,9 @@ import { IEvent } from '@/database/event.model';
 import { getSimilarEventsBySlug } from '@/lib/actions/event.action';
 import EventCard from '@/components/EventCard';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 const EventDetailItem = ({ icon, alt, label }: { icon: string, alt: string, label: string }) => (
@@ -38,8 +41,10 @@ const EventDetailsPage = async ({ params }: { params: Promise<{ slug: string }> 
     
     let event;
     try {
-        const request = await fetch(`${BASE_URL}/api/events/${slug}`, {
-            next: { revalidate: 60 }
+        const apiUrl = BASE_URL?.startsWith('http') ? `${BASE_URL}/api/events/${slug}` : `https://${BASE_URL}/api/events/${slug}`;
+        
+        const request = await fetch(apiUrl, {
+            cache: 'no-store' // Disable caching for dynamic content
         });
         
         if (!request.ok) {
